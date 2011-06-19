@@ -47,10 +47,13 @@ export IFS=$OFS
 
 # FUNCTIONS HERP DERP
 function get {
-    if [ '$CRAWLER' == 'wget' ]; then
-        wget $BASEURL$1 -x -nH --cut-dirs=$DIR_COUNT
-    else
-        curl $BASEURL$1 -s -S --create-dirs -o .git/$1
+    if [ ! -e .git/$1 ]; then
+      echo "Getting $1"
+      if [ '$CRAWLER' == 'wget' ]; then
+          wget $BASEURL$1 -x -nH --cut-dirs=$DIR_COUNT
+      else
+          curl $BASEURL$1 -s -S --create-dirs -o .git/$1
+      fi
     fi
 }
 
@@ -79,6 +82,14 @@ getsha `cat .git/$ref`
 
 #5 - get index
 get "index"
+
+if [ "$2" != "" ]; then
+   echo "Getting single file: $2"
+   sha=`git ls-files --stage|grep $2|head -1|awk '{print $2}'`
+   getsha $sha
+   git checkout $2
+   exit 0
+fi
 
 echo "About to make `git ls-files|wc -l` requests to ${HOST}; This could take a while"
 read -p "Do you want to continue? (y/n)"
